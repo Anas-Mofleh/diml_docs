@@ -66,7 +66,7 @@ class WebsiteChatbotPlugin:
     @kernel_function(
         description="Provides relevant information and resources from the website."
     )
-    async def search_website(self, user_query, top_k=5):
+    async def search_website(self, user_query, top_k=4):
         try:
             print("🔍 Searching for relevant information...")
             # Extract actual query text from the dict
@@ -105,7 +105,7 @@ class WebsiteChatbotPlugin:
         )
         return chunks, links
 
-    def chunk_text(self, text, max_tokens=13000):
+    def chunk_text(self, text, max_tokens=10000):
         """Chunk the text into pieces of up to `max_tokens` tokens using tiktoken."""
         enc = tiktoken.encoding_for_model(self.embeddings_model)
         tokens = enc.encode(text)
@@ -123,14 +123,14 @@ class WebsiteChatbotPlugin:
         print(f"🔍 Getting embeddings for {len(texts)} texts...")
         [print(text) for text in texts]
         embeddings = await self.client.embeddings.create(
-            input=texts, model=self.embeddings_model, dimensions=1536
+            input=texts, model=self.embeddings_model, dimensions=3072
         )  # 3072
         embeddings = [e.embedding for e in embeddings.data]
         return embeddings
 
     async def get_embedding(self, text):
         embeddings = await self.client.embeddings.create(
-            input=[text], model=self.embeddings_model, dimensions=1536
+            input=[text], model=self.embeddings_model, dimensions=3072
         )  # 3072
         return embeddings.data[0].embedding
 
