@@ -1,0 +1,30 @@
+# Web scraping
+requests
+beautifulsoup4
+
+
+# Async OpenAI client
+openai>=1.0.0  # For AsyncOpenAI
+
+# Semantic Kernel (Microsoft)
+semantic-kernel==1.28.1  # Pin to a working version you’ve tested
+
+# Web app framework
+fastapi
+uvicorn[standard]
+
+# Environment variables
+python-dotenv
+
+# Data handling
+numpy
+pandas
+
+# Type annotations / validation
+pydantic
+
+# If WebsiteChatbotPlugin and website_scraper are your own files,
+# they do not need to be listed here — just ensure they're in the same directory or importable
+
+
+tiktoken
