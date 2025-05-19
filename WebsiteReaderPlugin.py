@@ -43,6 +43,7 @@ class WebsiteChatbotPlugin:
             "https://region-skane-sdi.github.io/diml-docs/specifications/dataproduct/index.html",
             "https://region-skane-sdi.github.io/diml-docs/specifications/dataproduct/classes.html",
             "https://region-skane-sdi.github.io/diml-docs/specifications/dataproduct/schema.html",
+            "https://region-skane-sdi.github.io/diml-docs/data-products/deploy-dataproduct-dbx.html",
             "https://github.com/Region-Skane-SDI/diml-schemas/blob/main/data/v5/dataproduct.xsd",
         ]
         self.df = None
