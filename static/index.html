@@ -4,19 +4,21 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Website Chatbot</title>
+    <title>Diml docs bot</title>
     <link rel="stylesheet" href="static/main.css">
 </head>
 
 <body>
-    <header>💬 Website Chatbot</header>
+    <header>💬 Dimlbot</header>
 
-    <div id="chat"></div>
+    <div class="container">
+        <div id="chat"></div>
 
-    <form id="chat-form">
-        <input type="text" id="user-input" placeholder="Ask your question..." autocomplete="off" required />
-        <button type="submit">Send</button>
-    </form>
+        <form id="chat-form">
+            <input type="text" id="user-input" placeholder="Ask your question..." autocomplete="off" required />
+            <button type="submit">Send</button>
+        </form>
+    </div>
 
     <script>
         const chatBox = document.getElementById("chat");
