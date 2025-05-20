@@ -69,7 +69,7 @@ async def startup():
     agent = ChatCompletionAgent(
         service=chat_completion_service,
         plugins=[wcp],
-        name="WebsiteAgent",
+        name="Dimlbot",
         instructions=AGENT_INSTRUCTIONS,
     )
 
