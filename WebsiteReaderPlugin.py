@@ -12,42 +12,7 @@ class WebsiteChatbotPlugin:
         self.client = client
         self.embeddings_model = embeddings_model
         self.base_urls = [
-            "https://region-skane-sdi.github.io/diml-docs/concepts/dataproduct.html",
-            "https://region-skane-sdi.github.io/diml-docs/concepts/datasource.html",
-            "https://region-skane-sdi.github.io/diml-docs/concepts/datatypes.html",
-            "https://region-skane-sdi.github.io/diml-docs/concepts/traits.html",
-            "https://region-skane-sdi.github.io/diml-docs/techstack/index.html",
-            "https://region-skane-sdi.github.io/diml-docs/standards/healthdcat-ap.html",
-            "https://region-skane-sdi.github.io/diml-docs/standards/omop.html",
-            "https://region-skane-sdi.github.io/diml-docs/tools/index.html",
-            "https://region-skane-sdi.github.io/diml-docs/tools/vscode-ext.html",
-            "https://region-skane-sdi.github.io/diml-docs/tools/sourcer.html",
-            "https://region-skane-sdi.github.io/diml-docs/tools/data-builder.html",
-            "https://region-skane-sdi.github.io/diml-docs/components/index.html",
-            "https://region-skane-sdi.github.io/diml-docs/components/data-mgr.html",
-            "https://region-skane-sdi.github.io/diml-docs/components/id-mgr.html",
-            "https://region-skane-sdi.github.io/diml-docs/components/pseudonymization.html",
-            "https://region-skane-sdi.github.io/diml-docs/components/secret-mgr.html",
-            "https://region-skane-sdi.github.io/diml-docs/data-products/index.html",
-            "https://region-skane-sdi.github.io/diml-docs/data-products/specification-overview.html",
-            "https://region-skane-sdi.github.io/diml-docs/data-products/deploy-dataproduct-dbx.html",
-            "https://region-skane-sdi.github.io/diml-docs/data-products/data-stages/index.html",
-            "https://region-skane-sdi.github.io/diml-docs/data-products/data-stages/ingest.html",
-            "https://region-skane-sdi.github.io/diml-docs/data-products/data-stages/pseudonymize.html",
-            "https://region-skane-sdi.github.io/diml-docs/data-products/data-stages/typecast.html",
-            "https://region-skane-sdi.github.io/diml-docs/data-products/data-stages/validate.html",
-            "https://region-skane-sdi.github.io/diml-docs/data-products/data-stages/hash.html",
-            "https://region-skane-sdi.github.io/diml-docs/samples/sample_datasource_sql.html",
-            "https://region-skane-sdi.github.io/diml-docs/samples/sample_dataproduct.html",
-            "https://region-skane-sdi.github.io/diml-docs/samples/sample_dimlconfig.html",
-            "https://region-skane-sdi.github.io/diml-docs/specifications/datasource/index.html",
-            "https://region-skane-sdi.github.io/diml-docs/specifications/datasource/classes.html",
-            "https://region-skane-sdi.github.io/diml-docs/specifications/datasource/schema.html",
-            "https://region-skane-sdi.github.io/diml-docs/specifications/dataproduct/index.html",
-            "https://region-skane-sdi.github.io/diml-docs/specifications/dataproduct/classes.html",
-            "https://region-skane-sdi.github.io/diml-docs/specifications/dataproduct/schema.html",
-            "https://region-skane-sdi.github.io/diml-docs/data-products/deploy-dataproduct-dbx.html",
-            "https://github.com/Region-Skane-SDI/diml-schemas/blob/main/data/v5/dataproduct.xsd",
+            "https://api.github.com/repos/Region-Skane-SDI/diml/contents/docs/src/SUMMARY.md?ref=main"
         ]
         self.df = None
 
@@ -58,7 +23,7 @@ class WebsiteChatbotPlugin:
             print(f"✅ Loaded index from {filename}.")
         except FileNotFoundError:
             print(f"❌ File {filename} not found. Building index ...")
-            chunks, links = self.build_index(max_level=0)
+            chunks, links = self.build_index()
             embeddings = await self.get_embeddings(chunks)
             self.df = pd.DataFrame(
                 {"url": links, "text": chunks, "embeddings": embeddings}
@@ -92,10 +57,10 @@ class WebsiteChatbotPlugin:
     ############### helper functions ###############
     ################################################
 
-    def build_index(self, max_level=3):
+    def build_index(self):
         """Build an index of the website content."""
 
-        unique_links_dict = WebScraper().scrape(self.base_urls, max_level=max_level)
+        unique_links_dict = WebScraper().scrape(self.base_urls)
         chunks = []
         links = []
         for url, text in unique_links_dict.items():
@@ -108,7 +73,7 @@ class WebsiteChatbotPlugin:
         )
         return chunks, links
 
-    def chunk_text(self, text, max_tokens=10000):
+    def chunk_text(self, text, max_tokens=13000):
         """Chunk the text into pieces of up to `max_tokens` tokens using tiktoken."""
         enc = tiktoken.encoding_for_model(self.embeddings_model)
         tokens = enc.encode(text)
@@ -124,7 +89,6 @@ class WebsiteChatbotPlugin:
 
     async def get_embeddings(self, texts):
         print(f"🔍 Getting embeddings for {len(texts)} texts...")
-        [print(text) for text in texts]
         embeddings = await self.client.embeddings.create(
             input=texts, model=self.embeddings_model, dimensions=3072
         )  # 3072

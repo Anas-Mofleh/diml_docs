@@ -1,6 +1,6 @@
-from urllib.parse import urljoin
-from bs4 import BeautifulSoup
 import requests
+import pandas as pd
+import re
 import os
 
 
@@ -9,78 +9,41 @@ import os
 
 class WebScraper:
 
-    def scrape(self, links, max_level=1):
-        """Main function to scrape the website."""
-        unique_links_dict = {}
-        print("Scraping provided links ... ")
-        for base_url in links:
-            print(f"Scraping base url: {base_url}")
-            child_links = self.recursive_scrape(
-                base_url, base_url, unique_links_dict, max_level=max_level
-            )
-            unique_links_dict.update(child_links)
-        return unique_links_dict
-
-    """Scrape the main page and return the text and links."""
-
-    def scrape_text(self, url, token=None):
-
+    def fetch_file_content(self, url):
         response = requests.get(
             url,
-            headers={"Authorization": f"token {os.environ["GITHUB_TOKEN"]}"},
+            auth=(os.getenv("GITHUB_USERNAME"), os.getenv("GITHUB_TOKEN")),
+            headers={"Accept": "application/vnd.github.v3.raw"},
         )
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        # Get all paragraph text
-        paragraphs = [p.get_text() for p in soup.find_all("p")]
-        text = "\n".join(paragraphs)
-
-        # Get all links
-        links = list(
-            set(
-                [
-                    urljoin(url, a["href"])
-                    for a in soup.find_all("a", href=True)
-                    if a["href"].startswith("https")
-                ]
-            )
-        )  # Keep only internal links
-        return text, links
-
-    """Step 2: Recursively scrape child links up to a certain level."""
-
-    def recursive_scrape(self, base_url, url, unique_links_dict, max_level, level=0):
-        try:
-            if (
-                url.endswith("jpg")
-                or url.endswith("png")
-                or url.endswith("gif")
-                or url.endswith("jpeg")
-            ):
-                return unique_links_dict
-            else:
-                text_data, child_links = self.scrape_text(url)
-                if text_data and url not in unique_links_dict:
-                    unique_links_dict[url] = text_data
-
-                if level < max_level:
-                    # print(f"Level: {level} - Scraping url: {url}")
-                    for child_link in child_links:
-                        if child_link not in unique_links_dict:
-                            if not child_link.startswith(base_url):
-                                next_level = max_level
-                            else:
-                                next_level = level + 1
-                            self.recursive_scrape(
-                                base_url,
-                                child_link,
-                                unique_links_dict,
-                                max_level,
-                                level=next_level,
-                            )
-                    # print("")
-                    return unique_links_dict
-        except Exception as e:
-            print(e)
+        if response.status_code == 200:
+            file_content = response.text
+            return file_content
         else:
-            return unique_links_dict
+            print("Failed to fetch file:", response.status_code, response.text)
+            return None
+
+    def fetch_file_links(self, file_content):
+        matches = re.findall(r"\(([^)]+\.md)\)", file_content)
+        unique_links = sorted(set(matches))
+        return [
+            f"https://api.github.com/repos/Region-Skane-SDI/diml/contents/docs/src/{link}?ref=main"
+            for link in unique_links
+        ]
+
+    def scrape(self, urls):
+        knowledge_base = {}
+
+        for url in urls:
+            # Fetch the file content
+            file_content = self.fetch_file_content(url)
+            if file_content:
+                links = self.fetch_file_links(file_content)
+                knowledge_base.update({url: file_content})
+                print(f"found {len(links)} when scraping: {url}")
+                for idx, link in enumerate(links):
+                    print(f"Scraping file {idx+1}/{len(links)} from: {link}")
+                    knowledge_base.update({link: self.fetch_file_content(link)})
+                return knowledge_base
+            else:
+                print("Failed to fetch the main file content.")
+                return None
