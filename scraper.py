@@ -12,7 +12,7 @@ class WebScraper:
     def fetch_file_content(self, url):
         response = requests.get(
             url,
-            auth=(os.getenv("GITHUB_USERNAME"), os.getenv("GITHUB_TOKEN")),
+            auth=(os.getenv("GITHUB_USERNAME2"), os.getenv("GITHUB_TOKEN2")),
             headers={"Accept": "application/vnd.github.v3.raw"},
         )
         if response.status_code == 200:
