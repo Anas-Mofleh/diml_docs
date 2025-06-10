@@ -46,6 +46,7 @@ header {
     gap: 1.5rem;
 }
 
+
 .message {
     max-width: 80%;
     padding: 1rem 1.25rem;
@@ -53,6 +54,57 @@ header {
     font-size: 1rem;
     line-height: 1.5;
     white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.message pre {
+    background: #444753ef;
+    border-radius: 5px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.message code {
+    background: #444753ef;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+    width: fit-content;
+    display: inline-block;
+}
+
+/* Blinking cursor element */
+.cursor {
+    display: inline-block;
+    width: 1ch;
+    animation: blink 1s step-start infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* Spinner animation style */
+.spinner {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    border: 3px solid rgba(34, 91, 247, 0.822);
+    border-radius: 50%;
+    border-top-color: rgb(255, 255, 255);
+    animation: spin 1s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .user {
@@ -67,6 +119,7 @@ header {
     background-color: #2e2e3e;
     color: #e6e6e6;
     text-align: left;
+    width: auto;
 }
 
 form {

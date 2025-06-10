@@ -45,7 +45,7 @@ async def startup():
     global agent  # Declare agent as global to modify it
     endpoint = "https://models.inference.ai.azure.com/"
     # endpoint = "https://models.github.ai/inference"
-    model = "gpt-4.1"  # "openai/gpt-4.1"
+    model = "gpt-4o"  # "openai/gpt-4.1"
     embeddings_model = "text-embedding-3-large"  # "text-embedding-3-small"
     token = os.environ["OPENAI_API_KEY"]
     client = AsyncOpenAI(base_url=endpoint, api_key=token)

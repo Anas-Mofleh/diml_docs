@@ -9,22 +9,22 @@
 </head>
 
 <body>
-    <header>💬 Dimlbot</header>
-
+    <header>Dimlbot 💬</header>
     <div class="container">
         <div id="chat"></div>
-
         <form id="chat-form">
             <input type="text" id="user-input" placeholder="Ask your question..." autocomplete="off" required />
             <button type="submit">Send</button>
         </form>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         const chatBox = document.getElementById("chat");
         const form = document.getElementById("chat-form");
         const input = document.getElementById("user-input");
 
+        // Append simple messages (for user's messages)
         const appendMessage = (text, sender) => {
             const div = document.createElement("div");
             div.className = `message ${sender}`;
@@ -38,6 +38,7 @@
             const userText = input.value.trim();
             if (!userText) return;
 
+            // Show the user's query immediately.
             appendMessage(userText, "user");
             input.value = "";
 
@@ -48,27 +49,68 @@
                     body: JSON.stringify({ user_inputs: [userText] })
                 });
 
-                // Create a placeholder for the bot’s message
+                // Create container for the bot's answer and add spinner.
                 const botDiv = document.createElement("div");
                 botDiv.className = "message bot";
+                // Add spinner element to indicate loading.
+                const spinnerElem = document.createElement("div");
+                spinnerElem.className = "spinner";
+                botDiv.appendChild(spinnerElem);
                 chatBox.appendChild(botDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+
                 const reader = res.body.getReader();
                 const decoder = new TextDecoder();
                 let done = false;
+                let textQueue = "";
+                const animationDelay = 5; // Delay (in ms) between each appended character
 
-                // Read chunk by chunk
+                // Read the streamed response.
                 while (!done) {
                     const { value, done: doneReading } = await reader.read();
                     done = doneReading;
                     if (value) {
-                        // decode the chunk and append
-                        const chunk = decoder.decode(value, { stream: true });
-                        botDiv.textContent += chunk;
+                        textQueue += decoder.decode(value, { stream: true });
                     }
                 }
 
+                // Advanced Markdown Rendering:
+                // Accumulate the raw text then update the innerHTML gradually via Marked.
+                let rawText = "";
+                let stillTyping = true;
+
+                function updateMarkdownRendering() {
+                    let renderedHtml = marked.parse(rawText);
+                    if (stillTyping) {
+                        renderedHtml += '<span class="cursor"></span>';
+                    }
+                    botDiv.innerHTML = renderedHtml;
+                }
+
+                // Simulate a typewriter effect while updating markdown rendering incrementally.
+                function typeWriter() {
+                    if (textQueue.length > 0) {
+                        // Remove spinner if it's still present.
+                        const spinner = botDiv.querySelector('.spinner');
+                        if (spinner) spinner.remove();
+
+                        rawText += textQueue.charAt(0);
+                        textQueue = textQueue.substring(1);
+                        updateMarkdownRendering();
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                        setTimeout(typeWriter, animationDelay);
+                    } else {
+                        stillTyping = false;
+                        updateMarkdownRendering();
+                    }
+                }
+                typeWriter();
+
             } catch (err) {
-                botDiv.textContent = "⚠️ Error: Could not reach server.";
+                const errorDiv = document.createElement("div");
+                errorDiv.className = "message bot";
+                errorDiv.textContent = "⚠️ Error: Could not reach server.";
+                chatBox.appendChild(errorDiv);
                 console.error(err);
             }
         });
