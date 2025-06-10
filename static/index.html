@@ -48,13 +48,27 @@
                     body: JSON.stringify({ user_inputs: [userText] })
                 });
 
-                const data = await res.json();
-                const temp = document.createElement("div");
-                temp.innerHTML = data.html;
-                const botText = temp.innerText.trim() || "(No response)";
-                appendMessage(botText, "bot");
+                // Create a placeholder for the bot’s message
+                const botDiv = document.createElement("div");
+                botDiv.className = "message bot";
+                chatBox.appendChild(botDiv);
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let done = false;
+
+                // Read chunk by chunk
+                while (!done) {
+                    const { value, done: doneReading } = await reader.read();
+                    done = doneReading;
+                    if (value) {
+                        // decode the chunk and append
+                        const chunk = decoder.decode(value, { stream: true });
+                        botDiv.textContent += chunk;
+                    }
+                }
+
             } catch (err) {
-                appendMessage("⚠️ Error: Could not reach server.", "bot");
+                botDiv.textContent = "⚠️ Error: Could not reach server.";
                 console.error(err);
             }
         });

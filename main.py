@@ -11,7 +11,7 @@ from openai import AsyncOpenAI
 from WebsiteReaderPlugin import WebsiteChatbotPlugin
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
@@ -84,86 +84,23 @@ async def chat(request: ChatRequest):
     global agent  # Access the global agent variable
 
 
-# You could use a global or session-bound thread (for now, just keep in memory)
-active_thread: ChatHistoryAgentThread | None = None
-
-
 @app.post("/chat")
 async def chat(request: ChatRequest):
     global active_thread  # Keeps thread memory across function calls (in-memory only)
-    user_inputs = request.user_inputs
-    html_blocks = []
+    user_input = request.user_inputs[-1]
 
-    for user_input in user_inputs:
-        escaped_input = html.escape(user_input)
-        html_output = ""
-
-        agent_name = None
-        full_response: list[str] = []
-        function_calls: list[str] = []
-        current_function_name = None
-        argument_buffer = ""
-
+    async def event_stream(active_thread: ChatHistoryAgentThread | None = None):
         async for response in agent.invoke_stream(
             messages=user_input, thread=active_thread
         ):
             active_thread = response.thread  # Update thread each time
             agent_name = response.name
-            content_items = list(response.items)
+            for item in response.items:
+                if isinstance(item, StreamingTextContent) and item.text:
+                    # HTML-escape if you need
+                    yield item.text
 
-            for item in content_items:
-                if isinstance(item, FunctionCallContent):
-                    if item.function_name:
-                        current_function_name = item.function_name
-                    if isinstance(item.arguments, str):
-                        argument_buffer += item.arguments
-
-                elif isinstance(item, FunctionResultContent):
-                    if current_function_name:
-                        formatted_args = argument_buffer.strip()
-                        try:
-                            parsed_args = json.loads(formatted_args)
-                            formatted_args = json.dumps(parsed_args, indent=2)
-                        except Exception:
-                            pass
-                        function_calls.append(
-                            f"<div><strong>{ICONS['function']} Calling:</strong> {current_function_name}"
-                            f"<pre style='background:#eee; padding:0.5em; border-radius:5px;'>{html.escape(formatted_args)}</pre></div>"
-                        )
-                        current_function_name = None
-                        argument_buffer = ""
-
-                    function_calls.append(
-                        f"<div><strong>{ICONS['result']} Result:</strong><pre style='background:#f0f0f0; padding:0.5em; border-radius:5px;'>{html.escape(str(item.result))}</pre></div>"
-                    )
-
-                elif isinstance(item, StreamingTextContent) and item.text:
-                    full_response.append(item.text)
-
-        # Collapsible function call section
-        if function_calls:
-            html_output += f"""
-            <details style="margin:1em 0;">
-                <summary style="cursor:pointer; font-weight:bold; color:#336699;">
-                    {ICONS['function']} Function Calls (click to expand)
-                </summary>
-                <div style="margin-top:0.5em; font-size:0.95em;">
-                    {"<hr>".join(function_calls)}
-                </div>
-            </details>
-            """
-
-        html_output += f"""
-        <section style="margin:1em 0;">
-            <div style="font-weight:bold;">{ICONS['agent']} {html.escape(agent_name or 'Assistant')}:</div>
-            <div style="margin-left:1em; white-space:pre-wrap;">{html.escape(''.join(full_response).strip())}</div>
-        </section>
-        <hr style="border:none; border-top:1px solid #ccc; margin:2em 0;">
-        """
-
-        html_blocks.append(html_output)
-
-    return {"html": "\n".join(html_blocks)}
+    return StreamingResponse(event_stream(), media_type="text/plain")
 
 
 # For local testing
